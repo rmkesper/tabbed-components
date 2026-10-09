@@ -1,0 +1,146 @@
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+<form>
+    <!-- default -->
+    <label for="id_title">
+        <div>
+            <span><!-- Label Text -->Label Default</span>
+        </div>
+        <input type="text" name="title" id="id_title" required>
+    </label>
+    <label for="id_title_i18n">
+        <div>
+            <span><!-- Label Text -->Label Default</span>
+        </div>
+        <input type="text" name="title_i18n" id="id_title_i18n">
+        <div><!-- Help Text -->Current lang: lang_1</div>
+    </label>
+    <label for="id_title_lang_1">
+        <div>
+            <span><!-- Label Text -->Label (Lang1)</span>
+        </div>
+        <input type="text" name="title_lang_1" id="id_title_lang_1" class="border rounded p-2">
+    </label>
+    <label for="id_title_lang_2">
+        <div>
+            <span><!-- Label Text -->Label (Lang2)</span>
+        </div>
+        <input type="text" name="title_lang_2" id="id_title_lang_2" class="border rounded p-2">
+    </label>
+    <input type="submit" class="border my-2 px-4 py-1 bg-blue-400 text-white rounded-md">
+</form>
+<form>
+    <!-- iommi -->
+    <div data-iommi-path>
+        <label for="id_title"><!-- Label Text -->Label Iommi</label>
+        <input id="id_title" type="text" name="title" required>
+    </div>
+    <div data-iommi-path>
+        <label for="id_title_i18n"><!-- Label Text -->Label Iommi</label>
+        <input id="id_title_i18n" type="text" name="title_i18n">
+        <div class="helptext"><!-- Help Text -->Current lang: lang_1</div>
+    </div>
+    <div data-iommi-path>
+        <label for="id_title_lang_1"><!-- Label Text -->Label (Lang1)</label>
+        <input id="id_title_lang_1" type="text" name="title_lang_1" class="border rounded p-2">
+    </div>
+    <div data-iommi-path>
+        <label for="id_title_lang_2"><!-- Label Text -->Label (Lang2)</label>
+        <input id="id_title_lang_2" type="text" name="title_lang_2" class="border rounded p-2">
+    </div>
+    <input type="submit" class="border my-2 px-4 py-1 bg-blue-400 text-white rounded-md">
+</form>
+<script>
+    function toogleTab(tabName, isRequired, tabCss = "", tabSelectedCss = "") {
+        document.querySelectorAll("[data-lang]").forEach(n => {
+            if (!tabSelectedCss) {
+                n.style.setProperty("font-weight", n.dataset.lang === tabName ? "600" : "300")
+            } else {
+                n.className = n.dataset.lang === tabName ? tabSelectedCss : tabCss
+            }
+        })
+        document.querySelectorAll("[data-lang-field]").forEach(n => {
+            n.style.setProperty("display", n.dataset.langField === tabName ? "grid" : "none")
+            // update the required state to apply to the current visible field only
+            if (isRequired) n.querySelector("[name]").required = n.dataset.langField === tabName ? true : false
+        })
+
+    }
+    function addTabs(tabCss = "", tabSelectedCss = "") {
+        const parentSelector = "form"
+        const childSelector = '[name$="_i18n"]'
+        document.querySelectorAll(parentSelector).forEach(container => {
+            container.querySelectorAll(childSelector).forEach(ref => {
+                if (!ref.getAttribute("data-tabs-init")) {
+                    const name = ref.name.split("_i18n").join("")
+                    const def = container.querySelector(`#id_${name}`)
+                    const fields = Array.from(container.querySelectorAll(`[id^="id_${name}_"]`))
+                        .filter(n => !n.id.endsWith("_i18n"));
+                    let langs = []
+                    fields.forEach(fld => {
+                        langs.push(fld.id.split(`id_${name}_`)[1])
+                    })
+                    let help = "";
+                    if (ref?.nextElementSibling) help = ref.nextElementSibling.innerText
+                    let selected = "";
+                    if (help.includes(":")) selected = help.split(":")[1].trim()
+                    const required = !!def.getAttribute("required") || def.required
+    
+                    const component = document.createElement("div")
+                    // create the header (container for the tabs)
+                    const head = document.createElement("div")
+                    // create the body (container for the fields)
+                    const body = document.createElement("div");
+    
+                    // update field visibility
+                    [def, ref].forEach(n => {
+                        n.parentElement.style.setProperty("display", "none")
+                        if (required) n.required = false
+                    })
+                    fields.forEach(n => {
+                        n.setAttribute("data-nameref", name)
+                        n.parentElement.style.setProperty("display", n.name.endsWith(selected) ? "grid" : "none")
+                        n.parentElement.setAttribute("data-lang-field", n.id.split(`id_${name}_`)[1])
+                        if (required) n.required = n.name.endsWith(selected) ? true : false
+                        // apply an input / change event to transfer the changes to the parent element
+                        n.addEventListener("change", function($event) {
+                            container.querySelector(`#id_${n.dataset.nameref}`).value = $event.target.value
+                        }.bind(container))
+                    })
+    
+                    // insert the component before the main field id_<fieldname>
+                    def.parentElement.before(component);
+                    // add header and body to the component
+                    component.appendChild(head)
+                    component.appendChild(body)
+                    // add the tabs to the header
+                    langs.forEach(lang => {
+                        const e = document.createElement("button")
+                        e.innerText = lang
+                        e.type="button"
+                        if (!tabSelectedCss)
+                            e.style.setProperty("font-weight", lang === selected ? "600" : "300")
+                        e.setAttribute("data-lang", lang)
+                        e.setAttribute("onclick", `toogleTab('${lang}', ${required ? 'true' : 'false'}, '${tabCss}', '${tabSelectedCss}')`)
+                        e.className = lang === selected ? tabSelectedCss : tabCss
+                        head.append(e)
+                    })
+                    // move all fields in the body
+                    body.appendChild(def.parentElement)
+                    body.appendChild(ref.parentElement)
+                    fields.forEach(fld => {
+                        body.appendChild(fld.parentElement)
+                    })
+                }
+                ref.setAttribute("data-tabs-init", "true")
+    
+            })
+        })
+    }
+    document.addEventListener("DOMContentLoaded", () => {
+        addTabs(
+            "border py-1 px-4 rounded-t-md",
+            "border py-1 px-4 rounded-t-md bg-gray-400 border-gray-400 text-white"
+        )
+    })
+</script>
