@@ -51,7 +51,7 @@
     <input type="submit" class="border my-2 px-4 py-1 bg-blue-400 text-white rounded-md">
 </form>
 <script>
-    function toogleTab(tabName, isRequired, tabCss = "", tabSelectedCss = "") {
+    function toggleTab(tabName, isRequired, tabCss = "", tabSelectedCss = "") {
         document.querySelectorAll("[data-lang]").forEach(n => {
             if (!tabSelectedCss) {
                 n.style.setProperty("font-weight", n.dataset.lang === tabName ? "600" : "300")
@@ -121,7 +121,9 @@
                         if (!tabSelectedCss)
                             e.style.setProperty("font-weight", lang === selected ? "600" : "300")
                         e.setAttribute("data-lang", lang)
-                        e.setAttribute("onclick", `toogleTab('${lang}', ${required ? 'true' : 'false'}, '${tabCss}', '${tabSelectedCss}')`)
+                        e.addEventListener("click", () => {
+                            toggleTab(lang, required, tabCss, tabSelectedCss);
+                        });
                         e.className = lang === selected ? tabSelectedCss : tabCss
                         head.append(e)
                     })
