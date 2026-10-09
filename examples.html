@@ -145,4 +145,23 @@
             "border py-1 px-4 rounded-t-md bg-gray-400 border-gray-400 text-white"
         )
     })
+
+    // observe the dom to apply to later changes
+    const observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+            for (const node of mutation.addedNodes) {
+                if (node.nodeType !== Node.ELEMENT_NODE) continue;
+
+                // The added element might itself be a form.
+                if (node.matches("form")) {
+                    addTabs();
+                }
+            }
+        }
+    });
+
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+    });
 </script>
